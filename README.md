@@ -1,4 +1,4 @@
-# provability_sat
+# sequent-calculus
 
 WIP. Uses inversion (validity of consequence implies validity of premises) to find a sequent calculus proof for a given formula.
 
