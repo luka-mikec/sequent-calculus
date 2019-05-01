@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="UTF-8">
+ <script src="main_js.js"> </script>
+ <style> a, a:link, a:visited {text-decoration: none; color: rgb(151, 151, 151); }
+    a:hover, a:active { text-decoration: underline; color: black; }
+    table {
+      border-collapse: collapse;
+    }
+    td {
+      padding: 5px; font-size: 14;
+    }
+    table td, table th {
+      border: 1px solid black;
+    }
+    table tr:first-child td {
+      border-top: 0;
+    }
+    table tr:last-child td {
+      border-bottom: 0;
+    }
+    table tr td:first-child,
+    table tr th:first-child {
+      border-left: 0;
+    }
+    table tr td:last-child,
+    table tr th:last-child {
+      border-right: 0;
+    }
+
+ </style>
+</head>
+<body>
+  <div style="margin-left: auto; margin-right: auto; width: 400px; height: 400px; margin-top: 100px; padding: 20px; padding-right: 10px; text-align:center; background-color: ghostwhite; border: 1px solid lightgray; font-size: 14; ">
+  <form>
+    <input type="text" list="selectables" size="22" id="formula" style="font-size: 16;" autocomplete="off" value=""></input>
+    <datalist id="selectables">
+      
+    </datalist> 
+
+    &nbsp;
+    <select id="logic" style="font-size: 14;">
+      <option value="il">IL (or GL)</option>  
+      <option value="ilw">ILW</option>
+      <option value="ilp">ILP</option>
+    </select>
+    <br />
+    <br />
+    <input type="button" value="Check" onclick="check(document.getElementById('formula').value, document.getElementById('logic').value);" id="formula"></input>
+  </form>
+  <br />
+  operators &amp; symbols 
+  <hr/>
+  <table style="margin-left:auto; margin-right:auto;">
+  <tr>
+    <td>interprets</td>
+    <td>&gt;</td>
+  </tr>
+  <tr>
+    <td>box</td>
+    <td>[] B</td>
+  </tr>
+  <tr>
+    <td>diamond</td>
+    <td><> D</td>
+  </tr>
+  <tr>
+    <td>neg</td>
+    <td>~ &not;</td>
+  </tr>
+  <tr>
+    <td>or</td>
+    <td>| \/ +</td>
+  </tr>
+  <tr>
+    <td>and</td>
+    <td>&amp; /\ *</td>
+  </tr>
+  <tr>
+    <td>and not</td>
+    <td>%</td>
+  </tr>
+  <tr>
+    <td>conditional</td>
+    <td>-</td>
+  </tr>
+  <tr>
+    <td>false</td>
+    <td>#</td>
+  </tr>
+  <tr>
+    <td>true</td>
+    <td>T</td>
+  </tr>
+</table>
+  <br />
+  <br />
+  <div style="width: 100%; text-align: right">
+  <a href="https://github.com/luka-mikec/provability_sat">source code</a>
+  </div>
+  </div>
+  
+  <script>
+  var strs = get_principles();
+  var selectables = document.getElementById("selectables");
+  for (var i = 0; i < strs.length; ++i)
+  {
+    var uintArray = strs[i];
+    var decodedString = decodeURIComponent(escape(String.fromCharCode.apply(null, uintArray.splice(0, uintArray.length-1))));
+    var option = document.createElement('option');
+    option.value = "¬(" + decodedString + ")";
+    selectables.appendChild(option);
+  }
+  var inp = document.getElementById("formula");
+    inp.onkeyup = function()
+    {
+      var jsrepls = [ 
+        ["\u27c2", "#"], 
+        ["\u22a4", "T"],
+        ["\u25fb", "B"], ["\u25fb", "[]"], 
+        ["\u25ca", "D"], ["\u25ca", "<>"], 
+        ["\u00ac", "~"], 
+        ["\u2228", "|"], ["\u2228", "\\/"], ["\u2228", "+"], 
+        ["\u22B3", ">"], 
+        ["\u219b", "%"], 
+        ["\u2192", "-"], 
+        ["\u2227", "&"], ["\u2227", "/\\"], ["\u2227", "*"]
+      ];
+      for (var i = 0; i < jsrepls.length; i += 1)
+      {
+      	while (inp.value.indexOf(jsrepls[i][1]) != -1)
+        {
+          var oldsel = inp.selectionStart;
+          var oldsel2 = inp.selectionStart;
+          var idx = inp.value.indexOf(jsrepls[i][1]);
+          var val = inp.value.replace(jsrepls[i][1], jsrepls[i][0]);
+          inp.value = val;
+          if (oldsel <= idx)
+          	continue;
+            
+          var delta = jsrepls[i][1].length - jsrepls[i][0].length
+          inp.setSelectionRange(oldsel - delta, oldsel2 - delta);
+        }
+      }
+    }
+  </script>
+</body>
+</html>

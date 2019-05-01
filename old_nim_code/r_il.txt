@@ -1,0 +1,13 @@
+w   (p > q) & ~(~(p > ~c) > (q & Bc))
+        0 2  1                   5     3  9
+x    ~(p > ~c)    i svi Sw su ne: q i Bc
+
+y   p, neq  i Sx-a samo c                                     ~Sw   q, <>ne c
+
+                                                                                      ne c
+                                                                                      
+~(~(T > p) > #)
+
+~(T > p)
+
+~p

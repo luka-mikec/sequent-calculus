@@ -39,12 +39,6 @@ type
     # last_instanced_vars : seq[formula]
     # last_instanced_
 
-  sequent* = object
-    ante*  : seq[ref formula]
-    succ*  : seq[ref formula]
-
-    left*  : ref sequent
-    right* : ref sequent 
 
 const arity0_operators* = {falsum, verum}
 const arity1_operators* = {neg}
@@ -153,7 +147,7 @@ proc ft_to_chr*(ft : formula_type) : char =
     of notcond:     '%'
     of neg:         '~'
     of forall:      'A'
-    of exists:      'A'
+    of exists:      'E'
     else:           '?'
   
 
@@ -165,7 +159,7 @@ proc f_to_str*(f : formula) : string {.noSideEffect.} =
     of arity0_operators: $ft
     of arity1_operators: $ft & f_to_str(f.left[])
     of arity2_operators:
-      if ft in [forall, exists]: $f.last_instanced_ts & $ft & f_to_str(f.left[]) & f_to_str(f.right[]) 
+      if ft in [forall, exists]: (discard $f.last_instanced_ts; "") & $ft & f_to_str(f.left[]) & f_to_str(f.right[]) 
       else: "(" & f_to_str(f.left[]) & ' ' & $ft & ' ' & f_to_str(f.right[]) & ")"
     of relational:       f.identifier & "(" & f.vars.join(" ") & ")"
     of variable:         f.identifier
@@ -180,10 +174,10 @@ method `$`*(f : ref formula) : string {.noSideEffect.} =
 # this is just for infix -> prefix conversion
 type exprnode = object
   ftype : formula_type
-  data  : char
+  data  : string
   lexpr : ref exprnode
   rexpr : ref exprnode
-
+  
 
 proc infixp(str : string, i : var int, preferunary : bool = false) : ref exprnode =
   new(result)
@@ -205,11 +199,25 @@ proc infixp(str : string, i : var int, preferunary : bool = false) : ref exprnod
     of arity1_operators:
       inc i
       result.lexpr = infixp(str, i, true)
+    of exists, forall:
+      inc i
+      result.lexpr = infixp(str, i, true)
+      inc i
+      result.rexpr = infixp(str, i, true)
     of arity0_operators:
       result.ftype = ft
     else:
-      result.ftype = variable
-      result.data  = c
+      # relational or a variable
+      if is_lower c:
+        result.ftype = variable
+        result.data  = $c
+      else:
+        result.ftype = relational
+        result.data  = $c
+        while p != '\0' and is_lower p:
+          inc i
+          (c, p) = toks(str, i)
+          result.data &= $c
   # do we already know this expr is unary?
   if am_unary:
     return result
@@ -246,11 +254,25 @@ proc infixp(str : string, i : var int, preferunary : bool = false) : ref exprnod
     of arity1_operators:
       inc i
       result.rexpr.lexpr = infixp(str, i, true)
+    of exists, forall:
+      inc i
+      result.rexpr.lexpr = infixp(str, i, true)
+      inc i
+      result.rexpr.rexpr = infixp(str, i, true)
     of arity0_operators:
       result.rexpr.ftype = ft
     else:
-      result.rexpr.ftype = variable
-      result.rexpr.data  = c
+      # relational or a variable
+      if is_lower c:
+        result.rexpr.ftype = variable
+        result.rexpr.data  = $c
+      else:
+        result.rexpr.ftype = relational
+        result.rexpr.data  = $c
+        while p != '\0' and is_lower p:
+          inc i
+          (c, p) = toks(str, i)
+          result.rexpr.data &= $c
   result
 
 proc infixp(str : string) : ref exprnode =
@@ -259,7 +281,7 @@ proc infixp(str : string) : ref exprnode =
 
 proc exprnode_to_prefix(e : ref exprnode) : string =
   case e.ftype
-    of variable:
+    of variable, relational:
       $e.data
     of arity0_operators:
       $ft_to_chr(e.ftype)
@@ -276,7 +298,8 @@ proc from_infix*(str : string) : ref formula =
   from_prefix exprnode_to_prefix infixp multi_replace(str, ("->", "-"), ("&&", "&"), ("\\/", "|"), ("||", "|"), ("/\\", "&"),
                                  ("_|_", "#"), ("[]", "B"), ("<>", "D"), ("¬", "~"), ("|>", ">"), ("*", "&"), ("+", "|"),
                                  ("\u27c2", "#"), ("\u22a4", "T"), ("\u22B3", ">"), ("\u219b", "%"), ("\u2192", "-"),
-                                 ("\u2227", "&"), ("\u2228", "|"), ("\u25fb", "B"), ("\u25ca", "D"), ("\uac", "~") )
+                                 ("\u2227", "&"), ("\u2228", "|"), ("\u25fb", "B"), ("\u25ca", "D"), ("\uac", "~"),
+                                 ("forall", "A"), ("exists", "E") )
 
 
 
@@ -339,15 +362,3 @@ method relationals*(f : ref formula, bound : seq[string],
       relationals(v, bound_f, rls, vars)
     
 
-method relationals*(s : ref sequent): tuple[rls: seq[string], vars: seq[string]] {.noSideEffect.} =
-  var rls : seq[string] = @[]
-  var vars : seq[string] = @[]
-  for x in s.ante: relationals(x, @[], rls, vars) 
-  for x in s.succ: relationals(x, @[], rls, vars) 
-  vars.sort system.cmp[string]
-  (rls, vars)
-    
-
-method `$`*(s : ref sequent) : string {.noSideEffect.} =
-  var (rls, vars) = relationals(s)
-  ((rls.join " ") & " <> " & vars.join " ") & "   " & (s.ante.join " ") & " --> " & s.succ.join " "

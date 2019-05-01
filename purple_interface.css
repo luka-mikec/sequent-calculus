@@ -1,0 +1,111 @@
+/*
+    assumed HTML:
+
+
+
+
+ */
+
+body {
+    margin: 0;
+}
+
+body, button, .button {
+    font-family: 'Roboto';
+}
+
+header h1 {
+    padding-left: 1em;
+}
+
+navigation {
+    margin: 0;
+    background: #7a6490;
+    display: flex;
+}
+
+navigation, section {
+    padding: 10px;
+}
+
+section * {
+    box-sizing: border-box;
+}
+
+.button {
+    font-size: 11pt;
+
+    display: inline-flex;
+    align-items: center;
+
+    box-sizing: border-box;
+
+    background: #fafafa;
+    border: 1px solid #451d84;
+    /* color: white; */
+    color: #111;
+    border-radius: 3px;
+    text-decoration: none;
+    padding: 6px;
+    cursor: default;
+    box-shadow: 0 0 1px black;
+}
+
+.button option {
+    background: white;
+}
+
+.button + .button {
+    margin-left: 0.5em;
+}
+
+.button:hover {
+    background: #e6e2ec;
+}
+
+.modal {
+    position: absolute;
+    box-sizing: border-box;
+    overflow-y: auto;
+
+    z-index: 1;
+
+    width: 70%;
+    margin-left: 15%;
+    margin-top: 10vh;
+    height: 80vh;
+
+    background: rgba(240, 234, 251, 0.95);
+    border: 1px solid #341aa7;
+    border-radius: 4px;
+    box-shadow: 0px 0px 5px black;
+
+    text-align: justify;
+
+    display: none;
+}
+
+.modal h2 {
+    margin: 0;
+    padding: 1em;
+    background: rgb(202, 190, 247);
+}
+
+.modalcontent {
+    padding: 2em;
+    padding-left: 3em;
+    margin: 0;
+}
+
+.modalblock {
+    /*width: 48%;*/
+}
+
+.modal_overlay {
+    position: absolute;
+    width: 100vw;
+    height: 97vh;
+    margin: 0;
+    padding: 0;
+    display: none;
+}

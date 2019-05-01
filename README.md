@@ -1,9 +1,5 @@
-# sequent-calculus
+This tool uses sequent calculus to prove arbitrary valid formulas in a first-order language without function symbols.
 
-WIP. Uses inversion (validity of consequence implies validity of premises) to find a sequent calculus proof for a given formula.
+Please see help for more information.
 
-A proof will be found (given enough time and memory) if one exists. 
-
-At the moment this works for propositional logic and, to a bug-affected degree, first order logic with not too many quantifiers.
-
-
+[Live demo](https://luka.doublebuffer.net/o/sequents/)

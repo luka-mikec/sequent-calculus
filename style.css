@@ -1,0 +1,145 @@
+#inout {
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    width: 98vw;
+    font-size: 12pt;
+}
+
+#in {
+    padding: 0.5em;
+    width: 98wv;
+    border: 1px solid;
+    font-family: monospace;
+    font-size: 12pt;
+
+}
+
+#out {
+    #flex: 1 1 auto;
+    width: 98vw;
+
+    display: flex;
+    flex-direction: row;
+
+}
+
+
+#in, #in * {
+    white-space: nowrap;
+}
+
+
+#out_sequent {
+    min-height: 60vh;
+    padding: 0.5em;
+    border: 1px solid black;
+    width: calc(98vw);
+    /*width: 100%;*/
+
+    font-family: monospace;
+    overflow-x: auto;
+    text-align: center;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#out_sequent * {
+    white-space: nowrap;
+}
+
+#out_sequent > .gentz_node {
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+}
+
+
+#out_lat {
+    border: 1px solid black;
+    width: 100%;
+    height: 10vh;
+}
+
+
+.gentz_node {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+}
+.gentz_as_co {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.gentz_as_just {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+
+}
+.gentz_as {
+    border-bottom: 1px solid black;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+
+}
+.gentz_as_space {
+    width: 2em;
+    display: inline-block;
+}
+.gentz_co {
+    display: inline-block;
+    border-top: 1px solid black;
+    margin-top: -1px;
+}
+.gentz_just {
+    position: relative;
+    left: 0.3em;
+    bottom: 1.2ex;
+}
+
+.gentz_init_as {
+    display: inline-block;
+    border-top: 1px solid black;
+}
+
+
+
+
+
+
+
+.modalcontent td {
+    width: 3em;
+    border: 1px solid gray;
+    text-align: center;
+}
+
+
+.modalcontent td:first-child {
+    text-align: left;
+}
+
+.modalcontent td:nth-child(2) {
+    font-weight: bold;
+}
+
+
+
+
+#status {
+    display: inline-block;
+    margin-left: 0.3em;
+
+    width: 1em;
+    height: 1em;
+
+    border: 1px solid #666;
+    display: inline-block;
+    background-color: rgb(87, 158, 77);
+}

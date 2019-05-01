@@ -9,28 +9,58 @@ import future
 import lists
 import times
 import algorithm
-import os
 import parseutils
+import strformat
 
 import helpers
 import formula
 
-#[  sequent calculus  ]#
+type
+  sequent* = object
+    ante*  : seq[ref formula]
+    succ*  : seq[ref formula]
+
+    left*  : ref sequent
+    right* : ref sequent 
 
 
-method axiom(s : ref sequent) : bool =
+proc init_sequent*(ante : string = "", succ : string = "") : ref sequent = 
+  new(result)
+  result.ante = @[ from_infix ante ] # "ExAyEzAwRxyzw"
+  result.succ = @[ from_infix succ ] # "AyExAwEzRxyzw"
+
+
+method relationals*(s : ref sequent): tuple[rls: seq[string], vars: seq[string]] {.noSideEffect.} =
+  var rls : seq[string] = @[]
+  var vars : seq[string] = @[]
+  for x in s.ante: relationals(x, @[], rls, vars) 
+  for x in s.succ: relationals(x, @[], rls, vars) 
+  vars.sort do (a, b : string) -> int:
+    if (0 < len a) and a[0] == 'e' and (0 < len b) and b[0] == 'e':
+      return parse_int(a[1..^1]) - parse_int(b[1..^1])
+    else:
+      return system.cmp[string](a, b)
+  (rls, vars)
+    
+
+method `$`*(s : ref sequent) : string {.noSideEffect.} =
+  var (rls, vars) = relationals(s)
+  #((rls.join " ") & " <> " & vars.join " ") & "   " &   
+  (s.ante.join " ") & " --> " & s.succ.join " "
+
+
+
+method axiom*(s : ref sequent) : bool =
   return 
     s.ante.any( (a) => a.ft == falsum ) or   
     s.succ.any( (b) => b.ft == verum ) or 
     s.ante.any( (a) => s.succ.any( (b) => a.equals b ) ) 
 
-
-
-var ts = 0
-method inversion(s : ref sequent, todo : var seq[ref sequent]) : bool =
-  if (len todo) > 100:
-    #raise new_exception(ValueError, "too long")
-    return false
+var ts = 0 # timestamps should be proof-dependent
+method inversion*(s : ref sequent, todo : var seq[ref sequent], timeout : int = 200) : bool =
+  if (len todo) > timeout:
+    raise new_exception(ValueError, "too long")
+    #return false
   if axiom s:
     return true
 
@@ -123,6 +153,7 @@ method inversion(s : ref sequent, todo : var seq[ref sequent]) : bool =
         let f = left.ante[i]       
         let q = f.left.identifier
         let templat = f.right
+        let old_instanced_ts = f.last_instanced_ts
         f.last_instanced_ts = ts # important: changing the new instances
         inc ts
         let (rls, terms) = relationals s
@@ -134,6 +165,11 @@ method inversion(s : ref sequent, todo : var seq[ref sequent]) : bool =
               found = true
               sub = t
               break
+              #[ var inst : ref formula
+              inst.deep_copy templat 
+              inst.subst(q, sub)
+              inst.last_instanced_ts = -ts
+              left.ante.add inst ]#
         if not found:
           var k = 0
           while "e" & $k in terms:
@@ -142,7 +178,7 @@ method inversion(s : ref sequent, todo : var seq[ref sequent]) : bool =
         var inst : ref formula
         inst.deep_copy templat 
         inst.subst(q, sub)
-        inst.last_instanced_ts = -ts
+        inst.last_instanced_ts = old_instanced_ts # -ts
         left.ante.add inst
       else:
         raise new_exception(ValueError,  "unknown operator " & $f.ft)
@@ -189,6 +225,7 @@ method inversion(s : ref sequent, todo : var seq[ref sequent]) : bool =
       let f = left.succ[i]
       let q = f.left.identifier
       let templat = f.right
+      let old_instanced_ts = f.last_instanced_ts
       f.last_instanced_ts = ts # important: changing the new instances
       inc ts
       let (rls, terms) = relationals s
@@ -202,6 +239,11 @@ method inversion(s : ref sequent, todo : var seq[ref sequent]) : bool =
             found = true
             sub = t
             break
+            #[ var inst : ref formula
+            inst.deep_copy templat 
+            inst.subst(q, sub)
+            inst.last_instanced_ts = -ts
+            left.succ.add inst ]#
       if not found:
         var k = 0
         while "e" & $k in terms:
@@ -210,7 +252,7 @@ method inversion(s : ref sequent, todo : var seq[ref sequent]) : bool =
       var inst : ref formula
       inst.deep_copy templat 
       inst.subst(q, sub)
-      inst.last_instanced_ts = -ts
+      inst.last_instanced_ts = old_instanced_ts # -ts
       left.succ.add inst
     else:
       raise new_exception(ValueError,  "unknown operator")
@@ -229,76 +271,9 @@ method inversion(s : ref sequent, todo : var seq[ref sequent]) : bool =
   return good
     
 
-proc seqtree(s : ref sequent, depth : int = 0) : void =
+proc seqtree*(s : ref sequent, depth : int = 0) : void =
   if s.is_nil: return
   echo repeat(' ', depth * 2), $s
+  #discard readLine(stdin)
   if not s.left.is_nil: seqtree(s.left, depth + 1)
   if not s.right.is_nil: seqtree(s.right, depth + 1)
-
-#[
-block:
-  var a, b : seq[int]
-  a = @[1, 2]
-  b = a
-  b.add 5
-  echo b.join " "
-  quit()
-]#
-
-var s : ref sequent
-new(s)
-s.ante = @[ from_prefix "Ax-Ey&RxyAzRyzEy~Rxy" ]
-s.succ = @[ from_prefix "AxEy~Rxy" ]
-echo $s
-var todo : seq[ref sequent] = @[]
-  
-let b = s.inversion todo
-echo $b, " ", todo.join(" ")
-
-seqtree(s)
-var (rls, vars) = relationals(s)
-echo (rls.join " "), " <> ", vars.join " "
-
-
-var fr = from_prefix "-AxAyRxyzAxAyRxyz"
-fr.subst("z", "c")
-
-
-
-#echo $fr
-
-#[
-let f = from_infix "(T > DT) & DT"   # "((T > T) > T) & ~[] #"
-echo repr f
-echo sattreeil f
-echo sattreeilw f
-quit()
-]#
-
-
-#[
-echo "total time:", stopwatch do:
-  let stotal, total = search_job(0, threads, length)
-
-  var i = 0
-  var sorted_hs = to_seq highscore.keys()
-  sort(sorted_hs, system.cmp[float])
-  for sfr in sorted_hs:
-    let f = from_prefix highscore[sfr]
-    echo sfr, " : ", f
-    if i > 10:
-      break
-  echo total
-
-
-
-let frm = from_infix "(p > q) -> (~(p > ~c) > (q & Bc))" #
-#let frm = from_infix "~(~(T > p) > #)" # (p > q) &
-echo repr frm
-echo sattreeil frm
-
-quit()
-
-]#
-
-quit()

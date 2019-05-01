@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sequent-calculus</title>
+    <script src="formula.js"></script>
+    <script src="g.js"></script>
+    <script src="nearley.js"></script>
+    <script src="content.js"></script>
+    <script src="sequent.js"></script>
+    <link href="purple_interface.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="modal_overlay" onclick="help_close()"></div>
+<div class="modal">
+    <h2>Conventions</h2>
+    <div class="modalcontent">
+        <div class="modalblock">
+            <h3>About</h3>
+            <p>
+                This tool uses inversion principle to automatically find proofs of sequents, in a language without
+                    function symbols.
+                It performs a tiny bit of automated guidance by bookkeeping instantiation times etc., but is not very smart, and will probably take too long for complex formulas.
+            </p>
+        </div>
+        <div class="modalblock">
+            <h3>Syntax</h3>
+            <p>
+                Sequents are inputted as follows: A, B, ... --> C, D, ...
+
+                The following connectives and quantifiers are available:
+            </p>
+            <table>
+                <tr>
+                    <td></td><td>Symbol</td><td colspan="6">In text</td>
+                </tr>
+                <tr>
+                    <td>Logical NOT</td><td>¬</td><td>¬</td><td>~</td><td>-</td><td></td><td></td><td></td>
+                </tr>
+                <tr>
+                    <td>Logical AND</td><td>∧</td><td>/\</td><td>&</td><td>&&</td><td>*</td><td>.</td><td></td>
+                </tr>
+                <tr>
+                    <td>Logical OR</td><td>∨</td><td>\/</td><td>\/</td><td>+</td><td>|</td><td>||</td><td>,</td>
+                </tr>
+                <tr>
+                    <td>Conditional</td><td>→</td><td>-></td><td>&gt;</td><td>=&gt;</td><td></td><td></td><td></td>
+                </tr>
+                <tr>
+                    <td>Biconditional</td><td>↔</td><td><-></td><td>=</td><td>&lt;&gt;</td><td>&lt;=&gt;</td><td></td><td></td>
+                </tr>
+                <tr>
+                    <td>Falsum</td><td>⊥</td><td>#</td><td>_|_</td><td></td><td></td><td></td><td></td>
+                </tr>
+                <tr>
+                    <td>Universal quantifier</td><td>∀</td><td>A</td><td>@</td><td></td><td></td><td></td><td></td>
+                </tr>
+                <tr>
+                    <td>Existential quantifier</td><td>∃</td><td>E</td><td></td><td></td><td></td><td></td><td></td>
+                </tr>
+                <tr>
+                    <td>Relation</td><td>A&mdash;Z</td><td>A&mdash;Z</td><td></td><td></td><td></td><td></td><td></td>
+                </tr>
+                <tr>
+                    <td title="Important: see conventions below">Variable/Constant</td><td>a&mdash;z</td><td>a&mdash;z</td><td></td><td></td><td></td><td></td><td></td>
+                </tr>
+            </table>
+        </div>
+        <div class="modalblock">
+            <h3>Conventions</h3>
+            <p>
+                Note that relational symbols (including propositions) are limited in length to one character.
+                Letters 'A' and 'E' can be used for propositions (0-ary relations), but it might be confusing.
+                However, this tool will correctly detemine whether Ax
+                    is universal quantification or an atomic formula, assuming there are no typos in the starting formula.
+            </p>
+            <p>
+                You should put brackets everywhere, except when it doesn't matter. 
+                The only predefined precedence is that all unary operators (including quantifiers) have higher priority than binary operators.
+            </p>
+            <p>
+                Rules for the system:
+            </p>
+            <ul>
+                <li>mostly resembling (at the time of writing) Wikipedia's article on sequent calculus (LK).
+                </li>
+                <li>But without the cut rule (which is, of course, not strictly required for completeness).
+                </li>
+                <li>Eigen-variables are distinguished from bound variables, and both are different from constants.
+                </li>
+                <li>To keep things clean, lists of formulas are treated as sets, and structural rules are skipped.
+                </li>
+            </ul>
+        </div>
+        <div class="modalblock">
+            <h3>Author</h3>
+            <div>Luka Mikec, nameDOTsurnameATgmailDOTcom, and insert 1 before AT</div>
+        </div>
+    </div>
+</div>
+
+<header>
+    <h1>
+        Sequent-calculus
+    </h1>
+</header>
+<navigation>
+    <div class="button" >
+        Limit proof depth:&nbsp; <input id="time" type="text" style="width: 3em; text-align: center; " value="200" >
+    </div>
+
+    <div class="button" title="Green: proof found within the given depth. Yellow: syntax error. Red: proof not found within the given depth. ">
+        Status: <div id="status" style=""></div>
+    </div>
+
+    <div style="    flex-grow: 1 !important;"></div>
+
+    <select class="button" id="examples" oninput="example_click()" >
+        <option value="contrapos" selected>Example: Contraposition</option>
+        <option value="demorgan1">Example: De Morgan 1</option>
+        <option value="demorgan2">Example: De Morgan 2</option>
+        <option value="bicond_assoc">Example: ''Associativity'' of <-> </option>
+        <option value="drinker">Example: Drinker</option>
+    </select>
+
+    <a class="button" onclick="help_click()" >
+        Help
+    </a>
+    <a class="button" href="https://github.com/luka-mikec/sequent-calculus">
+        Git repository
+    </a>
+
+    <select class="button" id="lang" oninput="lang_click()" >
+        <option value="en" selected>English</option>
+        <option value="hr">Croatian</option>
+    </select>
+</navigation>
+<section>
+    <div style="" id="inout">
+        <input type="text" id="in"  style="" oninput="in_press(event)" value="A /\ B --> A \/ B">
+
+        <div id="out">
+            <div id="out_sequent">
+
+            </div>
+        </div>
+
+        <textarea id="out_lat" style="">b</textarea>
+
+    </div>
+    <div id="out_dbg" style="display: none;">c</div>
+</section>
+
+<script>
+    function help_click()
+    {
+        document.querySelector('.modal').style.display = 'block';
+        document.querySelector('.modal_overlay').style.display = 'block';
+    }
+    function help_close()
+    {
+        document.querySelector('.modal').style.display = 'none';
+        document.querySelector('.modal_overlay').style.display = 'none';
+    }
+    function lang_click(dont_compile)
+    {
+        window.clang = window[document.querySelector('#lang').value];
+        refresh_lang();
+        if (!dont_compile)
+            try_compile();
+        state_to_location();
+    }
+    //document.body.addEventListener('click', () => { document.querySelector('.modal').style.display = 'none'; } , true);
+
+
+    function wip_state()
+    {
+        status_div.style.backgroundColor = 'rgb(255, 213, 27)';
+    }
+
+    function ok_state()
+    {
+        status_div.style.backgroundColor = '#4CAF50';
+    }
+
+    function error_state()
+    {
+        status_div.style.backgroundColor = 'rgb(200,80,70)';
+    }
+
+    function example_click(dont_compile, dont_save)
+    {
+        in_div.value = window[document.querySelector('#examples').value].join(' -->  ');
+        if (!dont_compile)
+            try_compile();
+        if (!dont_save)
+            state_to_location();
+    }
+
+    function try_compile()
+    {
+        try {
+            compile();
+            ok_state();
+        }
+        catch (e)
+        {
+            if (e == 'too long')
+                wip_state();
+            else
+                error_state();
+        }
+    }
+
+    function in_keypress(args) {
+        //window.setTimeout(() => console.log(a, b, c, d), 1000);
+        //if (args.code == "Enter")
+    }
+
+    function in_press(args) {
+        state_to_location();
+        console.log(args);
+        try_compile();
+    }
+
+    function get_time() {
+        return Number.parseInt(document.querySelector('#time').value);
+    }
+
+    function state_to_location() {
+        let code = [
+            [ 'lang', document.querySelector('#lang').value ],
+            [ 'examples', document.querySelector('#examples').value ],
+            [ 'time', get_time().toString() ],
+            [ 'input', encodeURIComponent(in_div.value) ],
+        ].map(arr => arr.join('=')).join('___');
+
+        let new_loc;
+
+        if (window.location.href.indexOf('#') != -1)
+        {
+            new_loc = window.location.href.substring(0,
+                window.location.href.indexOf('#'));
+        }
+        else
+            new_loc = window.location.href;
+
+        window.location.href = new_loc + '#' + code;
+    }
+
+    window.addEventListener('load', () => {
+        let had_proper_input = false;
+
+        if (window.location.href.indexOf('#') != -1)
+        {
+            let pairs = window.location.href.
+                substring(window.location.href.indexOf('#') + 1).
+                split('___');
+            for (let pair of pairs) {
+                let [key, val] = pair.split('=');
+                switch (key) {
+                    case 'lang':
+                        document.querySelector('#lang').value = val;
+                        break;
+                    case 'examples':
+                        document.querySelector('#examples').value = val;
+                        break;
+                    case 'time':
+                        document.querySelector('#time').value = val;
+                        break;
+                    case 'input':
+                        in_div.value = decodeURIComponent(val);
+                        had_proper_input = true;
+                        break;
+                }
+            }
+        }
+
+        lang_click(true);
+        if (!had_proper_input )
+            example_click(true, true);
+        //in_div.addEventListener('beforeinput', in_keypress, true);
+        try_compile();
+    });
+
+</script>
+
+<script src="index.js"></script>
+</body>
+</html>
